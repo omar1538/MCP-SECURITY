@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-security-gateway"
+version = "0.1.0"
+description = "A security gateway between an LLM agent and its MCP tool servers, with an adversarial evaluation harness."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "mcp>=2.2,<3",
+    "langgraph>=1.2,<2",
+    "langchain-core>=1.0,<2",
+    "langchain-openai>=1.0,<2",
+    "faker>=30",
+    "reportlab>=4",
+    "pypdf>=5",
+    "pydantic>=2.7",
+    "uvicorn>=0.30",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.24", "ruff>=0.6"]
+
+[project.scripts]
+msg-gen-data = "data.generate:main"
+msg-agent = "agent.cli:main"
+msg-eval = "eval.harness:main"
+
+[tool.setuptools.packages.find]
+include = ["agent*", "mcp_servers*", "gateway*", "attacks*", "data*", "eval*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning:pypdf.*", "ignore:ARC4 has been moved"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]  # test fixtures use wide inline dict literals for readability
