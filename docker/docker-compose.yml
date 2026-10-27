@@ -1,0 +1,61 @@
+name: mcp-security-gateway
+
+# Shared data volume so the datagen output is visible to every service.
+x-common: &common
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile
+  environment:
+    MSG_DATA_DIR: /data
+  volumes:
+    - mcp-data:/data
+
+services:
+  # Generate the synthetic world once; other services wait for it.
+  datagen:
+    <<: *common
+    command: ["python", "-m", "data.generate", "--seed", "7", "--out", "/data"]
+
+  docstore:
+    <<: *common
+    command: ["python", "-m", "mcp_servers.docstore", "--host", "0.0.0.0", "--port", "8101"]
+    ports: ["8101:8101"]
+    depends_on:
+      datagen:
+        condition: service_completed_successfully
+
+  transactions:
+    <<: *common
+    command: ["python", "-m", "mcp_servers.transactions", "--host", "0.0.0.0", "--port", "8102"]
+    ports: ["8102:8102"]
+    depends_on:
+      datagen:
+        condition: service_completed_successfully
+
+  payments:
+    <<: *common
+    command: ["python", "-m", "mcp_servers.payments", "--host", "0.0.0.0", "--port", "8103"]
+    ports: ["8103:8103"]
+    depends_on:
+      datagen:
+        condition: service_completed_successfully
+
+  notify:
+    <<: *common
+    command: ["python", "-m", "mcp_servers.notify", "--host", "0.0.0.0", "--port", "8104"]
+    ports: ["8104:8104"]
+    depends_on:
+      datagen:
+        condition: service_completed_successfully
+
+  # Run the offline adversarial evaluation (no LLM needed).
+  eval:
+    <<: *common
+    command: ["python", "-m", "eval.harness", "--out", "/data/results/run.jsonl"]
+    depends_on:
+      datagen:
+        condition: service_completed_successfully
+    profiles: ["eval"]
+
+volumes:
+  mcp-data:
