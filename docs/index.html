@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MCP Security Gateway</title>
+<meta name="description" content="Evaluation dashboard for a security gateway between an LLM agent and its MCP tool servers." />
+<style>
+  :root{
+    --bg:#0b0f17; --panel:#121825; --panel2:#171f30; --border:#242f44;
+    --ink:#e8edf5; --muted:#8c99b0; --faint:#5e6b82;
+    --danger:#f0566b; --danger-dim:#4a2230; --safe:#29d3b5; --safe-dim:#123b36;
+    --accent:#6aa0ff; --accent-dim:#1b2b4d;
+    --radius:14px; --shadow:0 1px 0 rgba(255,255,255,.03), 0 12px 32px rgba(0,0,0,.35);
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:light){
+    :root:not([data-theme="dark"]){
+      --bg:#f5f7fb; --panel:#ffffff; --panel2:#f0f3f9; --border:#e2e8f2;
+      --ink:#121a2b; --muted:#5a6880; --faint:#8894ab;
+      --danger:#d63a54; --danger-dim:#fbe3e8; --safe:#0f9e86; --safe-dim:#dcf5ef;
+      --accent:#2f6bff; --accent-dim:#e4edff;
+      --shadow:0 1px 2px rgba(16,30,54,.06), 0 10px 30px rgba(16,30,54,.08);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--sans);
+    line-height:1.5; -webkit-font-smoothing:antialiased;
+    padding:0 16px 80px;
+  }
+  .wrap{max-width:1040px; margin:0 auto}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+  .eyebrow{letter-spacing:.14em; text-transform:uppercase; font-size:12px; color:var(--accent); font-weight:600}
+  h1{font-size:clamp(28px,5vw,40px); line-height:1.1; margin:.3em 0 .2em; letter-spacing:-.02em}
+  h2{font-size:20px; margin:0 0 4px; letter-spacing:-.01em}
+  .sub{color:var(--muted); max-width:66ch}
+  section{margin-top:48px}
+  .card{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow)}
+
+  /* hero */
+  header{padding:44px 0 8px}
+  .headline{
+    display:flex; align-items:stretch; gap:14px; flex-wrap:wrap; margin-top:28px;
+  }
+  .stat{flex:1 1 200px; padding:22px 24px; border-radius:var(--radius); border:1px solid var(--border); background:var(--panel)}
+  .stat .lbl{font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted)}
+  .stat .big{font-size:clamp(34px,7vw,52px); font-weight:700; line-height:1; margin-top:8px; font-variant-numeric:tabular-nums}
+  .stat.off{border-color:var(--danger); background:linear-gradient(180deg,var(--danger-dim),transparent 70%)}
+  .stat.off .big{color:var(--danger)}
+  .stat.on{border-color:var(--safe); background:linear-gradient(180deg,var(--safe-dim),transparent 70%)}
+  .stat.on .big{color:var(--safe)}
+  .arrow{display:flex; align-items:center; justify-content:center; color:var(--faint); font-size:26px; flex:0 0 auto; padding:0 4px}
+  .stat .foot{font-size:13px; color:var(--muted); margin-top:8px}
+
+  /* kpis */
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:12px}
+  @media (max-width:640px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{padding:16px 18px}
+  .kpi .n{font-size:28px; font-weight:700; font-variant-numeric:tabular-nums}
+  .kpi .k{font-size:12.5px; color:var(--muted); margin-top:2px}
+
+  /* chart */
+  .panel-pad{padding:22px 24px}
+  .legend{display:flex; gap:18px; align-items:center; font-size:13px; color:var(--muted); margin-top:4px}
+  .swatch{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:6px; vertical-align:-1px}
+  .catrow{display:grid; grid-template-columns:150px 1fr; gap:14px; align-items:center; margin:14px 0}
+  @media (max-width:560px){.catrow{grid-template-columns:110px 1fr}}
+  .catname{font-size:13.5px; text-transform:capitalize}
+  .catname small{display:block; color:var(--faint); font-size:11.5px}
+  .bars{display:flex; flex-direction:column; gap:6px}
+  .bar{height:16px; border-radius:5px; position:relative; background:var(--panel2); overflow:hidden}
+  .bar>span{position:absolute; inset:0 auto 0 0; border-radius:5px}
+  .bar.off>span{background:var(--danger)}
+  .bar.on>span{background:var(--safe)}
+  .bar .val{position:absolute; right:7px; top:50%; transform:translateY(-50%); font-size:11px; font-variant-numeric:tabular-nums; color:var(--ink); mix-blend-mode:normal}
+
+  /* layer cards */
+  .layers{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
+  @media (max-width:720px){.layers{grid-template-columns:1fr}}
+  .layer{padding:16px 18px; display:flex; flex-direction:column; gap:6px}
+  .layer .top{display:flex; justify-content:space-between; align-items:baseline; gap:10px}
+  .layer h3{margin:0; font-size:15px}
+  .layer .pill{font-size:11px; color:var(--muted); background:var(--panel2); border:1px solid var(--border); padding:2px 8px; border-radius:999px; white-space:nowrap}
+  .layer .mech{font-size:13px; color:var(--muted)}
+  .layer .count{font-size:12.5px; color:var(--safe); font-weight:600}
+  .layer .count.zero{color:var(--faint)}
+
+  /* explorer */
+  .controls{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:14px 0 6px}
+  .chips{display:flex; flex-wrap:wrap; gap:7px}
+  .chip{font-size:12.5px; padding:5px 11px; border-radius:999px; border:1px solid var(--border); background:var(--panel); color:var(--muted); cursor:pointer; user-select:none}
+  .chip[aria-pressed="true"]{background:var(--accent-dim); border-color:var(--accent); color:var(--ink)}
+  input[type=search]{flex:1 1 180px; min-width:150px; background:var(--panel); border:1px solid var(--border); color:var(--ink); padding:8px 12px; border-radius:10px; font-size:14px; font-family:var(--sans)}
+  input[type=search]::placeholder{color:var(--faint)}
+  .tablewrap{border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-top:10px}
+  table{width:100%; border-collapse:collapse; font-size:13px}
+  thead th{background:var(--panel2); text-align:left; padding:10px 12px; color:var(--muted); font-weight:600; font-size:11.5px; letter-spacing:.04em; text-transform:uppercase; position:sticky; top:0}
+  tbody td{padding:10px 12px; border-top:1px solid var(--border); vertical-align:middle}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:var(--panel2)}
+  .id{font-family:var(--mono); font-size:11.5px; color:var(--muted)}
+  .badge{font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; white-space:nowrap}
+  .badge.hit{background:var(--danger-dim); color:var(--danger)}
+  .badge.blocked{background:var(--safe-dim); color:var(--safe)}
+  .tag{font-size:11px; color:var(--muted); background:var(--panel2); border:1px solid var(--border); padding:1px 7px; border-radius:6px; white-space:nowrap}
+  .count-note{font-size:12.5px; color:var(--muted); margin-top:8px}
+
+  /* drawer */
+  .drawer-bg{position:fixed; inset:0; background:rgba(2,5,12,.55); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity .18s}
+  .drawer-bg.open{opacity:1; pointer-events:auto}
+  .drawer{position:fixed; top:0; right:0; height:100%; width:min(460px,92vw); background:var(--panel); border-left:1px solid var(--border); box-shadow:-20px 0 60px rgba(0,0,0,.4); transform:translateX(100%); transition:transform .22s ease; overflow:auto; padding:24px}
+  .drawer.open{transform:none}
+  .drawer .close{float:right; background:none; border:1px solid var(--border); color:var(--muted); border-radius:8px; width:30px; height:30px; cursor:pointer; font-size:16px}
+  .drawer h3{margin:4px 0 2px; font-size:17px}
+  .drawer .d-id{font-family:var(--mono); font-size:12px; color:var(--muted); word-break:break-all}
+  .kv{margin-top:18px}
+  .kv .row{display:flex; justify-content:space-between; gap:16px; padding:9px 0; border-top:1px solid var(--border); font-size:13.5px}
+  .kv .row .k{color:var(--muted)}
+  .kv .row .v{text-align:right; font-weight:600}
+  .verdict{margin-top:18px; padding:14px 16px; border-radius:12px; font-size:14px}
+  .verdict.ok{background:var(--safe-dim); border:1px solid var(--safe)}
+  .verdict.bad{background:var(--danger-dim); border:1px solid var(--danger)}
+  .verdict .reason{color:var(--muted); font-size:13px; margin-top:6px}
+
+  footer{margin-top:56px; padding-top:22px; border-top:1px solid var(--border); color:var(--muted); font-size:13px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px}
+  .theme-toggle{position:fixed; top:14px; right:16px; z-index:5; background:var(--panel); border:1px solid var(--border); color:var(--muted); border-radius:10px; padding:7px 10px; font-size:13px; cursor:pointer}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">◐ theme</button>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">MCP Security Gateway · Financial Agents</div>
+    <h1>A deterministic firewall for an AI agent's tool calls.</h1>
+    <p class="sub">A money-moving finance agent calls tools over MCP. Invoices it reads come
+      from outside the company, so their text is attacker-controllable. This gateway inspects
+      every tool call <em>and</em> every tool output, enforces a policy, and keeps an audit log.
+      Below: how it holds against <strong id="nAtk">156</strong> adversarial cases.</p>
+
+    <div class="headline">
+      <div class="stat off">
+        <div class="lbl">Attack success · gateway off</div>
+        <div class="big" id="asrOff">100%</div>
+        <div class="foot">the agent, fully compromised, gets its way</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="stat on">
+        <div class="lbl">Attack success · gateway on</div>
+        <div class="big" id="asrOn">0.6%</div>
+        <div class="foot">same attacks, blocked at the boundary</div>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="kpis">
+      <div class="card kpi"><div class="n" id="kAtk">156</div><div class="k">adversarial cases</div></div>
+      <div class="card kpi"><div class="n" id="kUtil">100%</div><div class="k">benign utility kept</div></div>
+      <div class="card kpi"><div class="n" id="kTests">97</div><div class="k">automated tests</div></div>
+      <div class="card kpi"><div class="n" id="kBlocked">—</div><div class="k">attacks neutralised</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Attack success by category</h2>
+    <p class="sub">Five attack classes, gateway off versus on.</p>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--danger)"></span>gateway off</span>
+      <span><span class="swatch" style="background:var(--safe)"></span>gateway on</span>
+    </div>
+    <div class="card panel-pad" id="catChart" style="margin-top:12px"></div>
+  </section>
+
+  <section>
+    <h2>What each layer catches</h2>
+    <p class="sub">The gateway runs five independent layers. The count is how many of the
+      blocked attacks each layer stopped first; the ablation ASR is what the attack surface
+      re-opens to when that one layer is removed.</p>
+    <div class="layers" id="layers" style="margin-top:14px"></div>
+  </section>
+
+  <section>
+    <h2>Attack explorer</h2>
+    <p class="sub">Every case, its outcome, and the layer that stopped it. Click a row for detail.</p>
+    <div class="controls">
+      <div class="chips" id="chips"></div>
+      <input type="search" id="search" placeholder="search id, intent, reason…" />
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>ID</th><th>Category</th><th>Intent</th><th>Off</th><th>On</th><th>Blocked by</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="count-note" id="countNote"></div>
+  </section>
+
+  <footer>
+    <span>Generated <span id="gen">—</span> · deterministic, no LLM required</span>
+    <span><a href="https://github.com/omar1538/MCP-SECURITY">github.com/omar1538/MCP-SECURITY</a></span>
+  </footer>
+</div>
+
+<div class="drawer-bg" id="drawerBg"></div>
+<aside class="drawer" id="drawer" aria-hidden="true"></aside>
+
+<script src="data.js"></script>
+<script>
+const LAYER_NAMES = {
+  pin_descriptions:"Description pinning", iban_allowlist:"IBAN allowlist",
+  require_approval:"Approval gating", egress_filter:"Egress filter",
+  scan_untrusted:"Untrusted-content scan", "":"not blocked"
+};
+const pct = x => (x*100).toFixed(x===0||x===1?0:1).replace(/\.0$/,"") + "%";
+
+function boot(data){
+  // headline + kpis
+  document.getElementById("asrOff").textContent = pct(data.headline.asr_off);
+  document.getElementById("asrOn").textContent  = pct(data.headline.asr_on);
+  document.getElementById("nAtk").textContent   = data.meta.attacks;
+  document.getElementById("kAtk").textContent   = data.meta.attacks;
+  document.getElementById("kTests").textContent = data.meta.tests;
+  document.getElementById("kUtil").textContent  = pct(data.headline.utility_on);
+  const blocked = data.attacks.filter(a=>!a.on).length;
+  document.getElementById("kBlocked").textContent = blocked + "/" + data.meta.attacks;
+  document.getElementById("gen").textContent = data.meta.generated;
+
+  // category chart
+  const cc = document.getElementById("catChart");
+  cc.innerHTML = data.by_category.map(c=>`
+    <div class="catrow">
+      <div class="catname">${c.category.replace(/_/g," ")}<small>${c.n} cases</small></div>
+      <div class="bars">
+        <div class="bar off"><span style="width:${Math.max(c.off*100,2)}%"></span><span class="val">${pct(c.off)}</span></div>
+        <div class="bar on"><span style="width:${Math.max(c.on*100,c.on>0?2:0)}%"></span><span class="val">${pct(c.on)}</span></div>
+      </div>
+    </div>`).join("");
+
+  // layer cards: combine LAYER_INFO + block counts + ablation
+  const counts = {};
+  data.attacks.forEach(a=>{ if(!a.on && a.block_layer) counts[a.block_layer]=(counts[a.block_layer]||0)+1; });
+  const abl = Object.fromEntries((data.ablation||[]).map(x=>[x.layer,x.asr]));
+  document.getElementById("layers").innerHTML = data.layers.map(l=>{
+    const n = counts[l.key]||0;
+    const a = abl[l.key];
+    return `<div class="card layer">
+      <div class="top"><h3>${l.name}</h3><span class="pill">vs ${l.defends}</span></div>
+      <div class="mech">${l.mechanism}</div>
+      <div class="count ${n?'':'zero'}">stopped ${n} attack${n===1?'':'s'} first${a!==undefined?` · removing it → ${pct(a)} ASR`:''}</div>
+    </div>`;}).join("");
+
+  // explorer
+  const cats = ["all", ...data.by_category.map(c=>c.category)];
+  let active="all", q="";
+  const chips = document.getElementById("chips");
+  chips.innerHTML = cats.map(c=>`<span class="chip" data-c="${c}" aria-pressed="${c==='all'}">${c==='all'?'all':c.replace(/_/g,' ')}</span>`).join("");
+  chips.querySelectorAll(".chip").forEach(ch=>ch.onclick=()=>{
+    active=ch.dataset.c; chips.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed", x.dataset.c===active)); render();
+  });
+  document.getElementById("search").oninput = e=>{ q=e.target.value.toLowerCase(); render(); };
+
+  const rowsEl = document.getElementById("rows"), note=document.getElementById("countNote");
+  function render(){
+    const list = data.attacks.filter(a=>{
+      if(active!=="all" && a.category!==active) return false;
+      if(q && !(`${a.id} ${a.intent} ${a.block_reason} ${a.subcategory}`.toLowerCase().includes(q))) return false;
+      return true;
+    });
+    rowsEl.innerHTML = list.map((a,i)=>`
+      <tr data-i="${data.attacks.indexOf(a)}">
+        <td class="id">${a.id}</td>
+        <td><span class="tag">${a.category.replace(/_/g,' ')}</span></td>
+        <td>${(a.intent||'').replace(/_/g,' ')}</td>
+        <td><span class="badge ${a.off?'hit':'blocked'}">${a.off?'success':'—'}</span></td>
+        <td><span class="badge ${a.on?'hit':'blocked'}">${a.on?'success':'blocked'}</span></td>
+        <td>${a.on?'<span class="tag">—</span>':`<span class="tag">${LAYER_NAMES[a.block_layer]||a.block_layer||'—'}</span>`}</td>
+      </tr>`).join("");
+    note.textContent = `showing ${list.length} of ${data.attacks.length} cases`;
+    rowsEl.querySelectorAll("tr").forEach(tr=>tr.onclick=()=>openDrawer(data.attacks[+tr.dataset.i]));
+  }
+  render();
+}
+
+function openDrawer(a){
+  const d=document.getElementById("drawer"), bg=document.getElementById("drawerBg");
+  const ok=!a.on;
+  d.innerHTML=`
+    <button class="close" id="dClose">×</button>
+    <div class="eyebrow">${a.category.replace(/_/g,' ')}</div>
+    <h3>${(a.intent||a.subcategory||'').replace(/_/g,' ')}</h3>
+    <div class="d-id">${a.id}</div>
+    <div class="verdict ${ok?'ok':'bad'}">
+      <strong>${ok?'Blocked by the gateway':'Attack succeeded'}</strong>
+      ${ok?`<div class="reason">${a.block_reason||'denied at the boundary'}</div>`:
+            `<div class="reason">this class needs a behavioural control the action layers do not cover</div>`}
+    </div>
+    <div class="kv">
+      <div class="row"><span class="k">Gateway off</span><span class="v" style="color:${a.off?'var(--danger)':'var(--safe)'}">${a.off?'succeeds':'fails'}</span></div>
+      <div class="row"><span class="k">Gateway on</span><span class="v" style="color:${a.on?'var(--danger)':'var(--safe)'}">${a.on?'succeeds':'blocked'}</span></div>
+      <div class="row"><span class="k">Blocking layer</span><span class="v">${LAYER_NAMES[a.block_layer]||'—'}</span></div>
+      <div class="row"><span class="k">Subcategory</span><span class="v">${(a.subcategory||'').replace(/_/g,' ')}</span></div>
+      <div class="row"><span class="k">Carrier task</span><span class="v" style="font-family:var(--mono);font-size:12px">${a.carrier}</span></div>
+    </div>`;
+  d.classList.add("open"); d.setAttribute("aria-hidden","false"); bg.classList.add("open");
+  document.getElementById("dClose").onclick=closeDrawer;
+}
+function closeDrawer(){
+  document.getElementById("drawer").classList.remove("open");
+  document.getElementById("drawerBg").classList.remove("open");
+}
+document.getElementById("drawerBg").onclick=closeDrawer;
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer();});
+
+// theme toggle (per-viewer convenience)
+(function(){
+  const btn=document.getElementById("themeToggle"), root=document.documentElement;
+  let t=null; try{t=localStorage.getItem("msg-theme");}catch(e){}
+  if(t)root.setAttribute("data-theme",t);
+  btn.onclick=()=>{
+    const cur=root.getAttribute("data-theme")||
+      (matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");
+    const next=cur==="dark"?"light":"dark";
+    root.setAttribute("data-theme",next);
+    try{localStorage.setItem("msg-theme",next);}catch(e){}
+  };
+})();
+
+// load data: inline (file://) first, then fetch (served / Pages)
+if(window.DASHBOARD_DATA){ boot(window.DASHBOARD_DATA); }
+else{
+  fetch("./dashboard.json").then(r=>r.json()).then(boot).catch(()=>{
+    document.querySelector(".wrap").insertAdjacentHTML("afterbegin",
+      '<p style="color:var(--danger);padding:16px 0">Could not load dashboard data. '+
+      'Serve this folder (e.g. <code>python -m http.server -d docs</code>) or open via GitHub Pages.</p>');
+  });
+}
+</script>
+</body>
+</html>

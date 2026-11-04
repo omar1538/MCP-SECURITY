@@ -31,6 +31,24 @@ The one surviving attack class is a tool-poisoning case that *suppresses* a flag
 (a detection-evasion attack, not a money-movement one); see
 [REPORT.md](REPORT.md) for the honest accounting.
 
+## Dashboard
+
+An interactive dashboard lives in [`docs/`](docs/): the headline numbers, attack
+success by category, what each layer catches, and a searchable explorer of all
+156 attacks where every row shows the gateway's verdict and the layer that
+blocked it. It is a static page with no backend or LLM.
+
+- **Hosted:** enable GitHub Pages (Settings → Pages → Branch `main`, folder
+  `/docs`); it serves at `https://omar1538.github.io/MCP-SECURITY/`.
+- **Local:** `python -m http.server -d docs` then open `http://localhost:8000`,
+  or just open `docs/index.html` directly (data is bundled in `docs/data.js`).
+
+Regenerate the data after changing the suite:
+
+```bash
+python -m eval.build_dashboard   # rewrites docs/dashboard.json and docs/data.js
+```
+
 ## How it works
 
 ```

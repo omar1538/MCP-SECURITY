@@ -174,6 +174,8 @@ class AttackResult:
     attack_succeeded: bool
     no_harm: bool
     denied_calls: int
+    block_layer: str = ""   # which gateway layer first denied a call (if any)
+    block_reason: str = ""
     meta: dict = field(default_factory=dict)
 
     def to_json(self) -> str:
@@ -214,10 +216,16 @@ async def run_attack(attack: AttackCase, gt: dict, policy: GatewayPolicy | None,
     succeeded = evaluate(attack.attack_check, outcome)
     no_harm = evaluate(NO_HARM, outcome)
     denied = gateway.stats.denied if gateway else 0
+    block_layer = block_reason = ""
+    if gateway is not None:
+        denial = next((e for e in gateway.audit if not e.allowed), None)
+        if denial is not None:
+            block_layer, block_reason = denial.layer, denial.reason
     return AttackResult(
         attack_id=attack.attack_id, category=attack.category, subcategory=attack.subcategory,
         condition=condition, attack_succeeded=succeeded, no_harm=no_harm,
-        denied_calls=denied, meta=attack.meta,
+        denied_calls=denied, block_layer=block_layer, block_reason=block_reason,
+        meta=attack.meta,
     )
 
 
