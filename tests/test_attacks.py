@@ -59,7 +59,7 @@ class TestGenerators:
 
 class TestGenerateAll:
     def test_count(self, ground_truth):
-        assert len(generate_attacks(ground_truth)) >= 35
+        assert len(generate_attacks(ground_truth)) >= 150
 
     def test_all_categories(self, ground_truth):
         cats = {c.category for c in generate_attacks(ground_truth)}

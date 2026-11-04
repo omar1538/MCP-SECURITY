@@ -11,7 +11,7 @@ company, so their contents are attacker-controllable: this is a realistic
 **indirect prompt injection** surface over tools that can move real money.
 
 The gateway inspects **every tool description, every tool call, and every tool
-output**, enforces a policy, and keeps an audit log. The harness throws **48
+output**, enforces a policy, and keeps an audit log. The harness throws **156
 attack cases** across five categories at the agent and measures the
 **Attack Success Rate (ASR)** with the gateway on versus off.
 
@@ -19,10 +19,10 @@ attack cases** across five categories at the agent and measures the
 
 | Metric | Gateway OFF | Gateway ON |
 |---|---|---|
-| Attack success rate (48 attacks) | **93.8%** | **2.1%** |
+| Attack success rate (156 attacks) | **100%** | **0.6%** |
 | Benign task utility (32 tasks) | 100% | **100%** |
 
-The gateway collapses attack success from 93.8% to 2.1% **without losing any
+The gateway collapses attack success from 100% to 0.6% **without losing any
 benign utility** — it blocks the attacks, not the work.
 
 ![ASR by category](results/asr_by_category.png)
@@ -123,7 +123,7 @@ data/          synthetic-data generator, invoice PDF renderer, SQLite schemas
 mcp_servers/   four MCP tool servers: docstore, transactions, payments, notify
 agent/         LangGraph agent, own MCP→LangChain adapter, runner, CLI
 gateway/       the security gateway: policy engine + enforcement + audit
-attacks/       adversarial case generator (48 cases, 5 categories)
+attacks/       adversarial case generator (156 cases, 5 categories)
 eval/          check predicates, benign tasks, harness, plots
 tests/         97 tests (offline, deterministic)
 infra/         Terraform for an AWS Fargate deployment (not auto-applied)

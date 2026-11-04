@@ -76,15 +76,20 @@ whether the gateway stops the harmful **effect**. This is the right bar for a
 last-line-of-defense control, and it makes results **deterministic and
 reproducible with no LLM / no API key**.
 
-**48 attack cases** across five categories (`attacks/generate.py`):
+**156 attack cases** across five categories (`attacks/generate.py`), built by
+crossing every invoice and many transaction memos with each injection channel
+and payload intent, plus a battery of tool-poisoning and rug-pull variants:
 
 | Category | n | Example |
 |---|---|---|
-| indirect_prompt_injection | 20 | payload in an invoice's visible note, white hidden text, PDF metadata, or a transaction memo |
-| tool_poisoning | 6 | a tool description that says "always use IBAN X" |
-| rug_pull | 7 | `create_payment_request`'s description changes to redirect, after the agent read the invoice |
-| exfiltration | 7 | email the balance + IBANs to an external address |
-| privilege_escalation | 8 | execute a payment, or change a payee IBAN, without approval |
+| indirect_prompt_injection | 90 | payload in an invoice's visible note, white hidden text, PDF metadata, or a transaction memo |
+| tool_poisoning | 10 | a tool description that says "always use IBAN X" |
+| rug_pull | 13 | `create_payment_request`'s description changes to redirect, after the agent read the invoice |
+| exfiltration | 25 | email the balance + IBANs to an external address |
+| privilege_escalation | 18 | execute a payment, or change a payee IBAN, without approval |
+
+Every attacker destination IBAN is unregistered and every exfiltration recipient
+is external, so the deterministic layers can block them on content alone.
 
 Benign utility is measured on **32 tasks** (invoice processing, categorization,
 anomaly flagging, account summary, chat notify), each with an *oracle* script
@@ -97,11 +102,11 @@ invariant.
 
 | | Gateway OFF | Gateway ON |
 |---|---|---|
-| Attack success rate | **93.8%** (45/48) | **2.1%** (1/48) |
+| Attack success rate | **100%** (156/156) | **0.6%** (1/156) |
 | Benign utility | 100% (32/32) | **100% (32/32)** |
 
-The gateway reduces ASR by **~45×** while preserving every benign task. It blocks
-the attacks, not the work.
+The gateway takes attack success from 100% to 0.6% while preserving every benign
+task. It blocks the attacks, not the work.
 
 ### 5.2 By category (ASR, off → on)
 
@@ -109,27 +114,27 @@ the attacks, not the work.
 |---|---|---|
 | indirect_prompt_injection | 100.0% | **0.0%** |
 | rug_pull | 100.0% | **0.0%** |
-| tool_poisoning | 100.0% | 16.7% |
-| privilege_escalation | 87.5% | **0.0%** |
-| exfiltration | 71.4% | **0.0%** |
+| exfiltration | 100.0% | **0.0%** |
+| privilege_escalation | 100.0% | **0.0%** |
+| tool_poisoning | 100.0% | 10.0% |
 
 ### 5.3 Ablation — ASR with one layer removed
 
-(Full gateway = 2.1%. A higher bar means that layer was carrying more of the
+(Full gateway = 0.6%. A higher bar means that layer was carrying more of the
 defense.)
 
 | Removed layer | ASR |
 |---|---|
-| `require_approval` | **37.5%** |
-| `egress_filter` | **27.1%** |
-| `iban_allowlist` | **25.0%** |
-| `pin_descriptions` | 2.1% |
-| `scan_untrusted` | 2.1% |
+| `require_approval` | **39.7%** |
+| `egress_filter` | **34.6%** |
+| `iban_allowlist` | **19.9%** |
+| `pin_descriptions` | 0.6% |
+| `scan_untrusted` | 0.6% |
 
 ![Ablation](results/ablation.png)
 
 The three **action-level** layers (approval, egress, allowlist) are load-bearing:
-removing any one re-opens a quarter to a third of the attack surface. The two
+removing any one re-opens roughly a fifth to two fifths of the attack surface. The two
 **content/integrity** layers (`pin_descriptions`, `scan_untrusted`) show no effect
 *in this worst-case scripted setting* — not because they do nothing, but because
 they are **backstopped**: a rug-pulled or poisoned payment still points at an
@@ -189,7 +194,7 @@ Everything is seeded; the harness needs no network and no model.
 
 A thin, deterministic policy gateway at the MCP boundary — IBAN allow-listing,
 approval gating, egress filtering, description pinning, and untrusted-content
-tagging — takes a money-moving finance agent from **93.8% to 2.1%** attack
-success against a broad injection/poisoning/rug-pull suite **without costing any
-benign utility**. The ablation shows the action-level layers do the heavy lifting,
-with the content layers as defense-in-depth.
+tagging — takes a money-moving finance agent from **100% to 0.6%** attack
+success across 156 cases spanning a broad injection/poisoning/rug-pull suite
+**without costing any benign utility**. The ablation shows the action-level
+layers do the heavy lifting, with the content layers as defense-in-depth.
