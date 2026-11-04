@@ -73,10 +73,10 @@
   .catname small{display:block; color:var(--faint); font-size:11.5px}
   .bars{display:flex; flex-direction:column; gap:6px}
   .bar{height:16px; border-radius:5px; position:relative; background:var(--panel2); overflow:hidden}
-  .bar>span{position:absolute; inset:0 auto 0 0; border-radius:5px}
-  .bar.off>span{background:var(--danger)}
-  .bar.on>span{background:var(--safe)}
-  .bar .val{position:absolute; right:7px; top:50%; transform:translateY(-50%); font-size:11px; font-variant-numeric:tabular-nums; color:var(--ink); mix-blend-mode:normal}
+  .bar .fill{position:absolute; left:0; top:0; bottom:0; border-radius:5px}
+  .bar.off .fill{background:var(--danger)}
+  .bar.on .fill{background:var(--safe)}
+  .bar .val{position:absolute; right:7px; top:50%; transform:translateY(-50%); font-size:11px; font-variant-numeric:tabular-nums; color:var(--ink)}
 
   /* layer cards */
   .layers{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
@@ -236,8 +236,8 @@ function boot(data){
     <div class="catrow">
       <div class="catname">${c.category.replace(/_/g," ")}<small>${c.n} cases</small></div>
       <div class="bars">
-        <div class="bar off"><span style="width:${Math.max(c.off*100,2)}%"></span><span class="val">${pct(c.off)}</span></div>
-        <div class="bar on"><span style="width:${Math.max(c.on*100,c.on>0?2:0)}%"></span><span class="val">${pct(c.on)}</span></div>
+        <div class="bar off"><i class="fill" style="width:${Math.max(c.off*100,2)}%"></i><span class="val">${pct(c.off)}</span></div>
+        <div class="bar on"><i class="fill" style="width:${c.on>0?Math.max(c.on*100,2):0}%"></i><span class="val">${pct(c.on)}</span></div>
       </div>
     </div>`).join("");
 
