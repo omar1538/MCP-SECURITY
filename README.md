@@ -49,6 +49,26 @@ Regenerate the data after changing the suite:
 python -m eval.build_dashboard   # rewrites docs/dashboard.json and docs/data.js
 ```
 
+## Live demo
+
+A small FastAPI app ([`server/`](server/)) runs the agent on any scenario — a
+benign task or one of the 156 attacks — with the gateway on or off, and streams
+the full trace to a browser UI: every tool call, the gateway's verdict (allow /
+deny + which layer + why), provenance tags on document reads, and the resulting
+side effects. Toggle the gateway and re-run to watch the same attack succeed, then
+get blocked.
+
+```bash
+pip install -e ".[dev]"
+export MSG_DATA_DIR=$PWD/.data
+uvicorn server.app:app --port 8000      # then open http://localhost:8000
+```
+
+It defaults to **scripted mode** (deterministic, no LLM needed). For **live mode**,
+set an OpenAI-compatible endpoint (`MSG_LLM_BASE_URL` / `MSG_LLM_MODEL` /
+`MSG_LLM_API_KEY`), expand "Live LLM mode" in the UI, and type a free-text task —
+the real model then decides the tool calls while the gateway mediates.
+
 ## How it works
 
 ```

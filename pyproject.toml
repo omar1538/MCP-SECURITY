@@ -18,6 +18,7 @@ dependencies = [
     "reportlab>=4",
     "pypdf>=5",
     "pydantic>=2.7",
+    "fastapi>=0.110",
     "uvicorn>=0.30",
 ]
 
@@ -30,7 +31,7 @@ msg-agent = "agent.cli:main"
 msg-eval = "eval.harness:main"
 
 [tool.setuptools.packages.find]
-include = ["agent*", "mcp_servers*", "gateway*", "attacks*", "data*", "eval*"]
+include = ["agent*", "mcp_servers*", "gateway*", "attacks*", "data*", "eval*", "server*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
