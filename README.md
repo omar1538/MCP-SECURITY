@@ -69,6 +69,14 @@ set an OpenAI-compatible endpoint (`MSG_LLM_BASE_URL` / `MSG_LLM_MODEL` /
 `MSG_LLM_API_KEY`), expand "Live LLM mode" in the UI, and type a free-text task —
 the real model then decides the tool calls while the gateway mediates.
 
+### Deploy it
+
+The demo ships as a **Hugging Face Space (Docker)** — see
+[`deploy/hf-space/`](deploy/hf-space/). Add an `HF_TOKEN` secret to the repo and
+run the **Deploy to Hugging Face Space** GitHub Action, or upload the two files in
+that folder to a new Docker Space by hand. Full steps:
+[`deploy/hf-space/DEPLOY.md`](deploy/hf-space/DEPLOY.md).
+
 ## How it works
 
 ```

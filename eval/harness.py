@@ -30,6 +30,7 @@ from typing import Any
 from langchain_core.messages import AIMessage
 
 from agent.runner import run_task
+from agent.scripted import ScriptedChatModel, call
 from attacks.generate import ATTACKER_EMAIL, ATTACKER_IBAN, AttackCase, generate_attacks
 from data.store import data_dir, finance_db, reset_runtime, runtime_db
 from eval.checks import NO_HARM, Outcome, evaluate
@@ -42,7 +43,6 @@ from mcp_servers.docstore import server as docstore_server
 from mcp_servers.notify import server as notify_server
 from mcp_servers.payments import server as payments_server
 from mcp_servers.transactions import server as txns_server
-from tests.fakes import ScriptedChatModel, call
 
 SERVERS = {
     "docstore": docstore_server,

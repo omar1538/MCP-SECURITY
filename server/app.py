@@ -32,6 +32,7 @@ from pydantic import BaseModel
 from agent.config import load_settings
 from agent.graph import build_chat_model
 from agent.runner import run_task
+from agent.scripted import ScriptedChatModel
 from attacks.generate import generate_attacks
 from data.store import data_dir, finance_db, reset_runtime, runtime_db
 from eval.checks import NO_HARM, Outcome, evaluate
@@ -46,7 +47,6 @@ from eval.harness import (
 from eval.tasks import build_task_suite
 from gateway.gateway import Gateway, load_allowed_ibans
 from gateway.policy import GatewayPolicy
-from tests.fakes import ScriptedChatModel
 
 app = FastAPI(title="MCP Security Gateway - live demo")
 _lock = asyncio.Lock()  # serialise runs; they share one runtime.db
@@ -141,7 +141,7 @@ async def _run(req: RunRequest) -> dict:
             check = None
         elif scenario and scenario["kind"] == "benign":
             t = scenario["_task"]
-            from tests.fakes import call as _mk
+            from agent.scripted import call as _mk
             msgs = [
                 AIMessage(content="", tool_calls=[_mk(s["tool"], f"o{i}", **s.get("args", {}))])
                 for i, s in enumerate(t.oracle)

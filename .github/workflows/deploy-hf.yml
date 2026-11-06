@@ -1,0 +1,38 @@
+name: Deploy to Hugging Face Space
+
+# Creates (if missing) and updates a Docker Space that serves the live demo.
+# One-time setup: add a repository secret HF_TOKEN (a Hugging Face access token
+# with write permission). Optionally set a repository variable HF_SPACE to
+# override the default Space id below.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "deploy/hf-space/**"
+      - ".github/workflows/deploy-hf.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "huggingface_hub>=0.25"
+      - name: Push Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: ${{ vars.HF_SPACE || 'omar1504/mcp-security-gateway' }}
+        run: |
+          python - <<'PY'
+          import os
+          from huggingface_hub import HfApi
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          space = os.environ["HF_SPACE"]
+          api.create_repo(space, repo_type="space", space_sdk="docker", exist_ok=True)
+          api.upload_folder(folder_path="deploy/hf-space", repo_id=space, repo_type="space")
+          print("Deployed:", f"https://huggingface.co/spaces/{space}")
+          PY
