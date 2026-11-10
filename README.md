@@ -71,11 +71,12 @@ the real model then decides the tool calls while the gateway mediates.
 
 ### Deploy it
 
-The demo ships as a **Hugging Face Space (Docker)** — see
-[`deploy/hf-space/`](deploy/hf-space/). Add an `HF_TOKEN` secret to the repo and
-run the **Deploy to Hugging Face Space** GitHub Action, or upload the two files in
-that folder to a new Docker Space by hand. Full steps:
-[`deploy/hf-space/DEPLOY.md`](deploy/hf-space/DEPLOY.md).
+The demo ships as a free **Hugging Face Space (Gradio)** —
+[`deploy/hf-gradio/`](deploy/hf-gradio/). Create a blank Gradio Space (CPU basic,
+free) and upload the three files in that folder, or add an `HF_TOKEN` secret and
+run the **Deploy to Hugging Face Space** GitHub Action. Full steps:
+[`deploy/hf-gradio/DEPLOY.md`](deploy/hf-gradio/DEPLOY.md). A Docker variant for
+paid plans is in [`deploy/hf-space/`](deploy/hf-space/).
 
 ## How it works
 

@@ -10,7 +10,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "deploy/hf-space/**"
+      - "deploy/hf-gradio/**"
       - ".github/workflows/deploy-hf.yml"
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
           from huggingface_hub import HfApi
           api = HfApi(token=os.environ["HF_TOKEN"])
           space = os.environ["HF_SPACE"]
-          api.create_repo(space, repo_type="space", space_sdk="docker", exist_ok=True)
-          api.upload_folder(folder_path="deploy/hf-space", repo_id=space, repo_type="space")
+          api.create_repo(space, repo_type="space", space_sdk="gradio", exist_ok=True)
+          api.upload_folder(folder_path="deploy/hf-gradio", repo_id=space, repo_type="space")
           print("Deployed:", f"https://huggingface.co/spaces/{space}")
           PY
