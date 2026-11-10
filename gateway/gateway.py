@@ -114,9 +114,8 @@ class Gateway:
                 blob = f"{args.get('subject','')} {args.get('body','')}"
                 if SENSITIVE_TOKENS.search(blob):
                     return Decision(False, "email carries IBAN-shaped data", "egress_filter")
-            elif tool == "post_chat_message":
-                if SENSITIVE_TOKENS.search(str(args.get("body", ""))):
-                    return Decision(False, "chat post carries IBAN-shaped data", "egress_filter")
+            elif tool == "post_chat_message" and SENSITIVE_TOKENS.search(str(args.get("body", ""))):
+                return Decision(False, "chat post carries IBAN-shaped data", "egress_filter")
 
         return Decision(True)
 
