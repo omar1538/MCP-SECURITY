@@ -27,6 +27,19 @@ import gradio as gr  # noqa: E402
 
 from eval.demo import run_scenario, scenarios  # noqa: E402
 
+# Hugging Face ZeroGPU Spaces refuse to start unless at least one @spaces.GPU
+# function exists, even for a CPU-only app like this one. Define a trivial,
+# never-called one so the Space boots on free ZeroGPU hardware. On any host
+# without the `spaces` package (e.g. local), this is skipped.
+try:
+    import spaces  # noqa: E402
+
+    @spaces.GPU(duration=1)
+    def _zerogpu_keepalive() -> bool:  # never invoked by the UI
+        return True
+except ImportError:
+    pass
+
 INK = "#e8edf5"
 MUT = "#8c99b0"
 BORDER = "#242f44"
