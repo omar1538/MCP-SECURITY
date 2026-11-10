@@ -1,2 +1,2 @@
 git+https://github.com/omar1538/MCP-SECURITY.git@main
-gradio>=4
+gradio==5.23.0
